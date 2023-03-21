@@ -1,0 +1,77 @@
+// mc.c : Monte Carlo calculation on ising model with triangle lattice
+
+#define DIM 2 // dimension
+#define NN  6 // # of nearest-neighbors
+
+#define L 2 // order of nearest-neighbor
+#define N 7 // # of sites
+
+#define X cos(M_PI/3)
+#define Y sin(M_PI/3)
+
+#include <omp.h>
+#include <math.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "ran2.c"
+
+typedef struct Lattice {
+	int s;           // spin
+	double crd[DIM]; // coordinate
+	int* nn[NN];     // addresses of nn
+} Lattice;
+
+const double CRDS[N][DIM] = { // coordinates
+	{0, 0}, {1, 0}, {-1, 0}, {X, Y} {X, -Y}, {-X, Y}, {-X, -Y}	
+};
+
+long seed = -1;
+
+void InitLat(int L, int N, lattice *lat) {
+	int i, j, k, m;
+	double crd_nn[DIM], err;
+
+	for(i=0; i<N; i++) {
+		lat[i].s = ran2(&seed) > 0.5 ? 1 : -1;
+
+		for(j=0; j<DIM; j++) lat[i].crd[j] = CRDS[i][j];
+
+		for(j=0; j<NN; j++) {
+			for(k=0; k<DIM; k++) crd_nn[k] = lat[i].crd[k] + CRDS[j+1][k];
+			for(k=0; k<N; k++) {
+				err = 0
+				for(m=0; m<DIM; m++) err += fabs(crd_nn[m] - CRDS[k][m]);
+				if(err < 1e-6) {
+					lat[i].nn[j] = lat[k].crd;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void Test(int N, Lattice *lat) {
+	int i, j, k, Ns = pow(2, N);
+
+	for(i=0; i<Ns; i++) {
+		for(j=0; j<N; j++) {
+			lat[i].s = 2*((i >> j) & 0x01)-1;
+		}
+	}
+}
+
+int main(int argc, char *argv[]) {
+	if(argc < 1) {
+		printf("%s : Monte Carlo calculation on ising model with triangle lattice\n", argv[0]);
+		exit(1);
+	}
+	omp_set_num_threads(1); 
+
+	Lattice lat[N];
+
+	Test(L, N, lat);
+
+	return 0;
+}
