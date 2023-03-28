@@ -82,17 +82,13 @@ class IsingTriangle:
 		fname = fname.split(',')
 		dtype = dtype.split(',')
 
-		data = []
-		for fn in fname:
-			with open('output/%s.txt' % fn, 'r') as f: data.append(np.genfromtxt(f))
-
 		fig, ax = plt.subplots(1, len(dtype), figsize=(2+3*len(dtype), 4), constrained_layout=True)
+		axs = np.ravel([ax]) 
 
-		if len(dtype) > 1:
-			for d, a in zip(dtype, ax):
-				for fn, da in zip(fname, data): self.DrawObs(fn, d, da, a)
-		else:
-			for fn, da in zip(fname, data): self.DrawObs(fn, dtype[0], da, ax)
+		for dt, ax in zip(dtype, ax):
+			for fn in fname:
+				with open('output/%s.txt' % fn, 'r') as f: data = np.genfromtxt(f)
+				self.DrawObs(fn, dt, data, ax)
 
 		fig.supxlabel('Temperature')
 		fig.savefig('diagram/obs_%s_%s.png' % (''.join(fname), ''.join(dtype)))

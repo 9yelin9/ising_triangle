@@ -3,10 +3,8 @@
 #define DIM 2    // dimension
 #define NN  6    // # of nearest-neighbors
 
-#define T_MAX 10  // maximum temperature
-#define NT    100 // # of temperature interval
-
-#define MC 1000000 // # of Monte Carlo iteration
+#define T_MAX 100 // maximum temperature
+#define NT    128 // # of temperature interval
 
 #define NORM(x) sqrt(x.c[0]*x.c[0] + x.c[1]*x.c[1])
 
@@ -130,21 +128,21 @@ void Test(Lattice *lat, double *T) {
 	printf("%s(%s) : %lds\n", __func__, fn, t1 - t0);
 }
 
-void MonteCarlo(Lattice *lat, double *T) {
+void MonteCarlo(Lattice *lat, double *T, int Nmc0) {
 	FILE *f;
 	char fn[64];
 
-	sprintf(fn, "output/mc%d.txt", (int)log10(MC));
+	sprintf(fn, "output/mc%d.txt", Nmc0);
 	f = fopen(fn, "w");
 
-	int i, j, k, n;
+	int i, j, k, n, Nmc = pow(10, Nmc0);
 	double E0, E1, E, M;
 
 	time_t t0 = time(NULL);
 
 	for(i=0; i<NT; i++) {
 		E = M = 0;
-		for(j=0; j<MC; j++) {
+		for(j=0; j<Nmc; j++) {
 			for(k=0; k<NN+1; k++) {
 				n = (int)((NN+1) * ran2(&seed)) % (NN+1);			
 
@@ -157,7 +155,7 @@ void MonteCarlo(Lattice *lat, double *T) {
 			E += CalcEnergy(lat);
 			M += fabs(CalcMagnetization(lat));
 		}
-		fprintf(f, "%f\t%f\t%f\n", T[i], E/MC, M/MC);
+		fprintf(f, "%f\t%f\t%f\n", T[i], E/Nmc, M/Nmc);
 	}
 	fclose(f);
 
@@ -167,7 +165,7 @@ void MonteCarlo(Lattice *lat, double *T) {
 
 int main(int argc, char *argv[]) {
 	if(argc < 1) {
-		printf("%s <test/mc> : Monte Carlo calculation on ising model with triangle lattice\n", argv[0]);
+		printf("%s <test/mc> <(mc)Nmc> : Monte Carlo calculation on ising model with triangle lattice\n", argv[0]);
 		exit(1);
 	}
 
@@ -183,7 +181,7 @@ int main(int argc, char *argv[]) {
 	for(i=0; i<NT; i++) T[i] = T_MAX - T_MAX * ((double)i / NT);
 
 	if(strstr(argv[1], "t")) Test(lat, T);
-	else                     MonteCarlo(lat, T);
+	else                     MonteCarlo(lat, T, atoi(argv[2]));
 
 	return 0;
 }
