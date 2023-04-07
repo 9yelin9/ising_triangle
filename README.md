@@ -1,2 +1,2 @@
 # ising_triangle
-ising model with triangle lattice
+Ising model with triangle lattice

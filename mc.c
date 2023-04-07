@@ -29,20 +29,33 @@ long seed = -1;
 
 void ReadVector(double *rad, Vector *r_lat, Vector *r_sup, Vector *r_sub) {
 	FILE *f = fopen("input/vector.txt", "r");
-	int i;
+	int i, j;
 
 	fscanf(f, "%lf", rad);
-	for(i=0; i<DIM;  i++) fscanf(f, "%lf%lf", &r_lat[i].c[0], &r_lat[i].c[1]);
-	for(i=0; i<DIM;  i++) fscanf(f, "%lf%lf", &r_sup[i].c[0], &r_sup[i].c[1]);
-	for(i=0; i<NN+1; i++) fscanf(f, "%lf%lf", &r_sub[i].c[0], &r_sub[i].c[1]);
+	for(i=0; i<DIM; i++) {
+		for(j=0; j<DIM; j++) fscanf(f, "%lf", &r_lat[i].c[j]);
+	}
+	for(i=0; i<DIM; i++) {
+		for(j=0; j<DIM; j++) fscanf(f, "%lf", &r_sup[i].c[j]);
+	}
+	for(i=0; i<NN+1; i++) {
+		for(j=0; j<DIM; j++) fscanf(f, "%lf", &r_sub[i].c[j]);
+	}
 
 	fclose(f);
 }
 
 void InitLat(Lattice *lat, double rad, Vector *r_sup, Vector *r_sub) {
 	int i, j, k, cnt;
-	int n0, n1, min = -4, max = 4;
+	int n0, n1, lim = 0, len;
 	Vector r;
+
+	for(i=0; i<DIM; i++) {
+		for(j=0; j<DIM; j++) {
+			len = (int)ceil(fabs(r_sup[i].c[j]));
+			lim = len > lim ? len : lim;
+		}
+	}
 
 	for(i=0; i<NN+1; i++) {
 		lat[i].s = ran2(&seed) > 0.5 ? 1 : -1;
@@ -50,8 +63,8 @@ void InitLat(Lattice *lat, double rad, Vector *r_sup, Vector *r_sub) {
 		for(j=0; j<DIM; j++) lat[i].c[j] = r_sub[i].c[j];
 
 		cnt = 0;
-		for(n0=min; n0<max; n0++) {
-			for(n1=min; n1<max; n1++) {
+		for(n0=-lim; n0<lim+1; n0++) {
+			for(n1=-lim; n1<lim+1; n1++) {
 				for(j=0; j<NN+1; j++) {
 					for(k=0; k<DIM; k++) r.c[k] = n0 * r_sup[0].c[k] + n1 * r_sup[1].c[k] + r_sub[j].c[k] - r_sub[i].c[k];
 					if(fabs(NORM(r) - rad) < 1e-6) {
@@ -128,14 +141,14 @@ void Test(Lattice *lat, double *T) {
 	printf("%s(%s) : %lds\n", __func__, fn, t1 - t0);
 }
 
-void MonteCarlo(Lattice *lat, double *T, int Nmc0) {
+void MonteCarlo(Lattice *lat, double *T, int Nmc_exp) {
 	FILE *f;
 	char fn[64];
 
-	sprintf(fn, "output/mc%d.txt", Nmc0);
+	sprintf(fn, "output/mc%d.txt", Nmc_exp);
 	f = fopen(fn, "w");
 
-	int i, j, k, n, Nmc = pow(10, Nmc0);
+	int i, j, k, n, Nmc = pow(10, Nmc_exp);
 	double E0, E1, E, M;
 
 	time_t t0 = time(NULL);
@@ -164,8 +177,8 @@ void MonteCarlo(Lattice *lat, double *T, int Nmc0) {
 }
 
 int main(int argc, char *argv[]) {
-	if(argc < 1) {
-		printf("%s <test/mc> <(mc)Nmc> : Monte Carlo calculation on ising model with triangle lattice\n", argv[0]);
+	if(argc < 2) {
+		printf("%s <test/mc> <(mc)Nmc_exp> : Monte Carlo calculation on ising model with triangle lattice\n", argv[0]);
 		exit(1);
 	}
 

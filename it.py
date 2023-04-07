@@ -72,13 +72,7 @@ class IsingTriangle:
 
 		plt.show()
 
-	def DrawObs(self, fname, dtype, data, ax):
-		ax.plot(data[:, 0], data[:, self.obs_dict[dtype]['col']], marker='.', label=fname)
-		ax.set_title(self.obs_dict[dtype]['full'])
-		ax.grid()
-		ax.legend()
-
-	def ShowObs(self, fname, dtype):
+	def ShowObs(self, fname, dtype, sc_log=False):
 		fname = fname.split(',')
 		dtype = dtype.split(',')
 
@@ -88,7 +82,11 @@ class IsingTriangle:
 		for dt, ax in zip(dtype, ax):
 			for fn in fname:
 				with open('output/%s.txt' % fn, 'r') as f: data = np.genfromtxt(f)
-				self.DrawObs(fn, dt, data, ax)
+				if dt == sc_log: ax.plot(data[:, 0], np.log(data[:, self.obs_dict[dt]['col']]), marker='.', label='ln('+fn+')')
+				else:            ax.plot(data[:, 0],        data[:, self.obs_dict[dt]['col']],  marker='.', label=fn)
+				ax.set_title(self.obs_dict[dt]['full'])
+				ax.grid()
+				ax.legend()
 
 		fig.supxlabel('Temperature')
 		fig.savefig('diagram/obs_%s_%s.png' % (''.join(fname), ''.join(dtype)))
